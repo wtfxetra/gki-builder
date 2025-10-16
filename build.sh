@@ -90,15 +90,6 @@ git clone --depth=1 -q \
   https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 \
   $GCC_DIR
 
-# Clone Rust
-log "Cloning Rust...."
-RUST_DIR="$WORKDIR/rust"
-RUST_BIN="${RUST_DIR}/linux-x86/1.73.0b/bin"
-git clone --depth=1 -q \
-  https://android.googlesource.com/platform/prebuilts/rust \
-  -b main-kernel-build-2024 \
-  $RUST_DIR
-
 # Clone kernel build tools
 log "Cloning Kbuild tools..."
 KBUILD_TOOLS_DIR="$WORKDIR/kbuild-tools"
@@ -210,12 +201,11 @@ export KBUILD_BUILD_USER="$USER"
 export KBUILD_BUILD_HOST="$HOST"
 export KBUILD_BUILD_TIMESTAMP=$(date)
 MAKE_ARGS=(
-  LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-android-
+  LLVM=1
+  ARCH=arm64
+  CROSS_COMPILE=aarch64-linux-android-
   -j$(nproc --all)
   O=$OUTDIR
-  RUSTC=rustc
-  PAHOLE=pahole
-  LD=ld.lld HOSTLD=ld.lld
 )
 KERNEL_IMAGE="$OUTDIR/arch/arm64/boot/Image"
 
