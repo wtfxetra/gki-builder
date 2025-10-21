@@ -212,6 +212,7 @@ MAKE_ARGS=(
   CROSS_COMPILE=aarch64-linux-android-
   -j$(nproc --all)
   O=$OUTDIR
+  KCFLAGS=-w
 )
 KERNEL_IMAGE="$OUTDIR/arch/arm64/boot/Image"
 
