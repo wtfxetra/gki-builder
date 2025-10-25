@@ -2,7 +2,7 @@
 
 # Constants
 WORKDIR="$(pwd)"
-RELEASE="v0.1"
+RELEASE="v0.2"
 KERNEL_NAME="QuartiX"
 USER="eraselk"
 HOST="gacorprjkt"
@@ -10,7 +10,7 @@ TIMEZONE="Asia/Makassar"
 ANYKERNEL_REPO="https://github.com/linastorvaldz/anykernel"
 ANYKERNEL_BRANCH="android15-6.6"
 KERNEL_REPO="https://github.com/linastorvaldz/kernel_common"
-KERNEL_BRANCH="android15-6.6-2024-08"
+KERNEL_BRANCH="android15-6.6-2025-01"
 KERNEL_DEFCONFIG="quartix_defconfig"
 GKI_RELEASES_REPO="https://github.com/linastorvaldz/quartix-releases"
 #CLANG_URL="https://github.com/linastorvaldz/idk/releases/download/clang-r547379/clang.tgz"
@@ -146,6 +146,8 @@ if susfs_included; then
   if [ $LINUX_VERSION_CODE -eq 6630 ]; then
     patch -p1 < $WORKDIR/kernel-patches/namespace.c_fix.patch
     patch -p1 < $WORKDIR/kernel-patches/task_mmu.c_fix.patch
+  elif [ $LINUX_VERSION_CODE -eq 6658 ]; then
+    patch -p1 < $WORKDIR/kernel-patches/task_mmu.c_fix-k6.6.58.patch
   fi
   SUSFS_VERSION=$(grep -E '^#define SUSFS_VERSION' ./include/linux/susfs.h | cut -d' ' -f3 | sed 's/"//g')
 
