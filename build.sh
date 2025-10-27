@@ -46,6 +46,7 @@ log "Setting Kernel variant..."
 case "$KSU" in
   "Next") VARIANT="KSUN" ;;
   "Suki") VARIANT="SUKISU" ;;
+  "Magic") VARIANT="MKSU" ;;
   "None") VARIANT="NKSU" ;;
 esac
 susfs_included && VARIANT+="+SuSFS"
@@ -127,6 +128,7 @@ if ksu_included; then
   # Install kernelsu
   case "$KSU" in
     "Next") install_ksu KernelSU-Next/KernelSU-Next next ;;
+    "Magic") install_ksu 5ec1cff/KernelSU main ;;
     "Suki") install_ksu SukiSU-Ultra/SukiSU-Ultra $(if susfs_included; then echo "susfs-main"; elif ksu_manual_hook; then echo "nongki"; else echo "main"; fi) ;;
   esac
   config --enable CONFIG_KSU
@@ -153,22 +155,37 @@ if susfs_included; then
   SUSFS_VERSION=$(grep -E '^#define SUSFS_VERSION' ./include/linux/susfs.h | cut -d' ' -f3 | sed 's/"//g')
 
   # KernelSU-side
-  if [[ "$KSU" == "Next" ]]; then
+  if [ "$KSU" == "Next" ] || [ "$KSU" == "Magic" ]; then
     log "Applying kernelsu-side susfs patches.."
-    KERNEL_PATCHES_DIR="$PWD/kernel_patches"
-    SUSFS_FIX_PATCHES="$KERNEL_PATCHES_DIR/next/susfs_fix_patches/$SUSFS_VERSION"
-    git clone --depth=1 -q https://github.com/WildKernels/kernel_patches $KERNEL_PATCHES_DIR
-    if [ ! -d "$SUSFS_FIX_PATCHES" ]; then
-      error "susfs fix patches are not available for susfs $SUSFS_VERSION."
+    if [ "$KSU" == "Next" ]; then
+      KERNEL_PATCHES_DIR="$PWD/kernel_patches"
+      SUSFS_FIX_PATCHES="$KERNEL_PATCHES_DIR/next/susfs_fix_patches/$SUSFS_VERSION"
+      git clone --depth=1 -q https://github.com/WildKernels/kernel_patches $KERNEL_PATCHES_DIR
+      if [ ! -d "$SUSFS_FIX_PATCHES" ]; then
+        error "susfs fix patches are not available for susfs $SUSFS_VERSION."
+      fi
     fi
-    cd KernelSU-Next
-    patch -p1 < $SUSFS_PATCHES/KernelSU/10_enable_susfs_for_ksu.patch || true
-    # apply the fix patches
-    for p in "$SUSFS_FIX_PATCHES"/*.patch; do
-      patch -p1 --forward --fuzz=3 < $p
-    done
-    # cleanup .orig / .rej
-    find . -type f \( -name '*.orig' -o -name '*.rej' \) -delete
+
+    if [ "$KSU" == "Next" ]; then
+      cd KernelSU-Next
+    elif [ "$KSU" == "Magic" ]; then
+      cd KernelSU
+    fi
+
+    if [ "$KSU" == "Next" ]; then
+      patch -p1 < $SUSFS_PATCHES/KernelSU/10_enable_susfs_for_ksu.patch || true
+    elif [ "$KSU" == "Magic" ]; then
+      patch -p1 < $SUSFS_PATCHES/KernelSU/10_enable_susfs_for_ksu.patch
+    fi
+
+    if [ "$KSU" == "Next" ]; then
+      # apply the fix patches
+      for p in "$SUSFS_FIX_PATCHES"/*.patch; do
+        patch -p1 --forward --fuzz=3 < $p
+      done
+      # cleanup .orig / .rej
+      find . -type f \( -name '*.orig' -o -name '*.rej' \) -delete
+    fi
     cd $OLDPWD
   fi
   config --enable CONFIG_KSU_SUSFS
