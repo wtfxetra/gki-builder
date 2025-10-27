@@ -12,6 +12,7 @@ ANYKERNEL_BRANCH="android15-6.6"
 KERNEL_REPO="https://github.com/linastorvaldz/kernel_common"
 KERNEL_BRANCH="android15-6.6-2025-01"
 KERNEL_DEFCONFIG="quartix_defconfig"
+DEFCONFIG_TO_MERGE=""
 GKI_RELEASES_REPO="https://github.com/linastorvaldz/quartix-releases"
 #CLANG_URL="https://github.com/linastorvaldz/idk/releases/download/clang-r547379/clang.tgz"
 CLANG_URL="$(./clang.sh aosp)"
@@ -231,6 +232,18 @@ EOF
 ## Build GKI
 log "Generating config..."
 make ${MAKE_ARGS[@]} $KERNEL_DEFCONFIG
+
+if [ "$DEFCONFIG_TO_MERGE" ]; then
+  log "Merging configs..."
+  if [ -f "scripts/kconfig/merge_config.sh" ]; then
+    for config in $DEFCONFIG_TO_MERGE; do
+      make ${MAKE_ARGS[@]} scripts/kconfig/merge_config.sh $config
+    done
+  else
+    error "scripts/kconfig/merge_config.sh does not exist in the kernel source"
+  fi
+  make ${MAKE_ARGS[@]} olddefconfig
+fi
 
 # Upload defconfig if we are doing defconfig
 if [[ $TODO == "defconfig" ]]; then
