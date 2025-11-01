@@ -2,16 +2,16 @@
 
 # Constants
 WORKDIR="$(pwd)"
-RELEASE="v0.2"
-KERNEL_NAME="QuartiX"
+RELEASE="v0.1"
+KERNEL_NAME="ztc1997"
 USER="eraselk"
-HOST="gacorprjkt"
+HOST="ztc1997"
 TIMEZONE="Asia/Makassar"
 ANYKERNEL_REPO="https://github.com/linastorvaldz/anykernel"
-ANYKERNEL_BRANCH="android15-6.6"
+ANYKERNEL_BRANCH="android12-5.10"
 KERNEL_REPO="https://github.com/linastorvaldz/kernel_common"
-KERNEL_BRANCH="android15-6.6-2025-01"
-KERNEL_DEFCONFIG="quartix_defconfig"
+KERNEL_BRANCH="android12-5.10"
+KERNEL_DEFCONFIG="ztc1997_defconfig"
 DEFCONFIG_TO_MERGE=""
 GKI_RELEASES_REPO="https://github.com/linastorvaldz/quartix-releases"
 #CLANG_URL="https://github.com/linastorvaldz/idk/releases/download/clang-r547379/clang.tgz"
@@ -100,7 +100,7 @@ KBUILD_TOOLS_DIR="$WORKDIR/kbuild-tools"
 KBUILD_TOOLS_BIN="${KBUILD_TOOLS_DIR}/linux-x86/bin"
 git clone --depth=1 -q \
   https://android.googlesource.com/kernel/prebuilts/build-tools \
-  -b main-kernel-build-2024 \
+  -b master-kernel-build-2021 \
   $KBUILD_TOOLS_DIR
 
 export PATH="${CLANG_BIN}:${GCC_BIN}:${RUST_BIN}:${KBUILD_TOOLS_BIN}:$PATH"
@@ -139,19 +139,15 @@ fi
 if susfs_included; then
   # Kernel-side
   log "Applying kernel-side susfs patches"
+
   SUSFS_DIR="$WORKDIR/susfs"
   SUSFS_PATCHES="${SUSFS_DIR}/kernel_patches"
-  SUSFS_BRANCH=gki-android15-6.6
+  SUSFS_BRANCH=gki-android12-5.10
+
   git clone --depth=1 -q https://gitlab.com/simonpunk/susfs4ksu -b $SUSFS_BRANCH $SUSFS_DIR
   cp -R $SUSFS_PATCHES/fs/* ./fs
   cp -R $SUSFS_PATCHES/include/* ./include
-  patch -p1 < $SUSFS_PATCHES/50_add_susfs_in_${SUSFS_BRANCH}.patch || true
-  if [ $LINUX_VERSION_CODE -eq 6630 ]; then
-    patch -p1 < $WORKDIR/kernel-patches/namespace.c_fix.patch
-    patch -p1 < $WORKDIR/kernel-patches/task_mmu.c_fix.patch
-  elif [ $LINUX_VERSION_CODE -eq 6658 ]; then
-    patch -p1 < $WORKDIR/kernel-patches/task_mmu.c_fix-k6.6.58.patch
-  fi
+  patch -p1 < $SUSFS_PATCHES/50_add_susfs_in_${SUSFS_BRANCH}.patch
   SUSFS_VERSION=$(grep -E '^#define SUSFS_VERSION' ./include/linux/susfs.h | cut -d' ' -f3 | sed 's/"//g')
 
   # KernelSU-side
@@ -222,9 +218,9 @@ if [[ $TODO == "kernel" ]]; then
   if [[ $STATUS == "BETA" ]]; then
     SUFFIX="$LATEST_COMMIT_HASH"
   else
-    SUFFIX="${RELEASE}-${LATEST_COMMIT_HASH}"
+    SUFFIX="${RELEASE}@${LATEST_COMMIT_HASH}"
   fi
-  config --set-str CONFIG_LOCALVERSION "-$KERNEL_NAME-$SUFFIX"
+  config --set-str CONFIG_LOCALVERSION "-$KERNEL_NAME/$SUFFIX"
 fi
 
 # Declare needed variables
@@ -233,6 +229,7 @@ export KBUILD_BUILD_HOST="$HOST"
 export KBUILD_BUILD_TIMESTAMP=$(date)
 MAKE_ARGS=(
   LLVM=1
+  LLVM_IAS=1
   ARCH=arm64
   CROSS_COMPILE=aarch64-linux-android-
   -j$(nproc --all)
@@ -338,7 +335,7 @@ fi
 if [[ $LAST_BUILD == "true" && $STATUS != "BETA" ]]; then
   (
     echo "LINUX_VERSION=$LINUX_VERSION"
-    echo "SUSFS_VERSION=$(curl -s https://gitlab.com/simonpunk/susfs4ksu/raw/gki-android15-6.6/kernel_patches/include/linux/susfs.h | grep -E '^#define SUSFS_VERSION' | cut -d' ' -f3 | sed 's/"//g')"
+    echo "SUSFS_VERSION=$(curl -s https://gitlab.com/simonpunk/susfs4ksu/raw/gki-android12-5.10/kernel_patches/include/linux/susfs.h | grep -E '^#define SUSFS_VERSION' | cut -d' ' -f3 | sed 's/"//g')"
     echo "KERNEL_NAME=$KERNEL_NAME"
     echo "RELEASE_REPO=$(simplify_gh_url "$GKI_RELEASES_REPO")"
   ) >> $WORKDIR/artifacts/info.txt
