@@ -98,7 +98,9 @@ jobs:
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
-          rm -rr $CONFIG/common
+          cd $CONFIG
+
+          rm -rf common
 
           git clone https://github.com/wtfxetra/vulcanx-gki -b BBG $CONFIG/common
 
