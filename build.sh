@@ -206,6 +206,11 @@ if ksu_manual_hook; then
   config --disable CONFIG_KSU_SUSFS_SUS_SU # Conflicts with manual hook
 fi
 
+# Disable SuS_SU for MKSU
+if [ "$KSU" == "Magic" ] && susfs_included; then
+  config --disable CONFIG_KSU_SUSFS_SUS_SU
+fi
+
 # Enable KPM Supports for SukiSU
 # if [[ $KSU == "Suki" ]]; then
 #   config --enable CONFIG_KPM
