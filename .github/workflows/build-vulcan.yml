@@ -25,7 +25,7 @@ jobs:
           mkdir gki && cd gki
           repo init -u https://android.googlesource.com/kernel/manifest -b common-android12-5.10-lts
           repo sync -c --no-tags --no-clone-bundle --optimized-fetch
-          rm -rf common
+          # rm -rf common
           # git clone --depth=1 https://github.com/wtfxetra/vulcanx-gki common
 
       - name: Delete Line 2 in build.config.gki
