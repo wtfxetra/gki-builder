@@ -76,7 +76,7 @@ jobs:
       - name: Final Clean Tree Commit (before build)
         run: |
           cd gki
-          cd clone https://github.com/wtfxetra/AnyKernel3.git zippper
+          git clone https://github.com/wtfxetra/AnyKernel3.git zippper
 
       - name: Build Kernel
         run: |
