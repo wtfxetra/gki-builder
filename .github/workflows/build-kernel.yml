@@ -87,7 +87,7 @@ jobs:
           echo "Patching ptrace!"
           patch -p1 -F 3 < "../../kernel_patches/gki_ptrace.patch"
       
-            - name: Apply Hooks Patches
+      - name: Apply Hooks Patches
         run: |
           echo "Changing to configuration directory: $CONFIG..."
           cd "$CONFIG/common"
