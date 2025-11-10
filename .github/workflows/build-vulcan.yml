@@ -110,7 +110,6 @@ jobs:
       - name: Copy Images
         run: |
           cp gki/out/android12-5.10/common/arch/arm64/boot/Image ./
-          cd gki/
 
           # Create gzip of the Image file
           gzip -n -k -f -9 ./Image > ./Image.gz
