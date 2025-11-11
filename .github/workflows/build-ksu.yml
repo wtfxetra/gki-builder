@@ -153,8 +153,8 @@ jobs:
           echo "CONFIG_KSU_KPROBES_HOOK=n" >> "$defconfig"
 
           # Time Freq
-          echo "CONFIG_HZ_300=y" >> "$defconfig"
-          echo "CONFIG_HZ=300" >> "$defconfig"
+          echo "CONFIG_HZ_100=y" >> "$defconfig"
+          echo "CONFIG_HZ=100" >> "$defconfig"
           
 
           
