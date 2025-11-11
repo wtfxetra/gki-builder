@@ -1,4 +1,4 @@
-name: Build Script
+name: Build Script KSU
 permissions:
   contents: write
   actions: write 
