@@ -151,6 +151,10 @@ jobs:
           # KernelSU Core Configuration
           echo "CONFIG_KSU=y" >> "$defconfig"
           echo "CONFIG_KSU_KPROBES_HOOK=n" >> "$defconfig"
+
+          # Time Freq
+          echo "CONFIG_HZ_300=y" >> "$defconfig"
+          echo "CONFIG_HZ=300" >> "$defconfig"
           
 
           
