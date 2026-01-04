@@ -232,7 +232,7 @@ MAKE_ARGS=(
   LLVM_IAS=1
   ARCH=arm64
   CROSS_COMPILE=aarch64-linux-android-
-  -j$(nproc --all)
+  -j2
   O=$OUTDIR
 )
 KERNEL_IMAGE="$OUTDIR/arch/arm64/boot/Image"
@@ -251,6 +251,9 @@ EOF
 ## Build GKI
 log "Generating config..."
 make ${MAKE_ARGS[@]} $KERNEL_DEFCONFIG
+config --disable CONFIG_LTO
+config --disable CONFIG_LTO_CLANG
+config --enable CONFIG_LTO_NONE
 
 if [ "$DEFCONFIG_TO_MERGE" ]; then
   log "Merging configs..."
