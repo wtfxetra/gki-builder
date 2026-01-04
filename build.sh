@@ -234,6 +234,8 @@ MAKE_ARGS=(
   CROSS_COMPILE=aarch64-linux-android-
   -j$(($(nproc) / 2))
   O=$OUTDIR
+  CONFIG_LTO_CLANG_NONE=y  # Add this
+  CONFIG_LTO_NONE=y
 )
 KERNEL_IMAGE="$OUTDIR/arch/arm64/boot/Image"
 export KCFLAGS="-w -mcpu=cortex-a55 -mtune=cortex-a76"
@@ -251,9 +253,6 @@ EOF
 ## Build GKI
 log "Generating config..."
 make ${MAKE_ARGS[@]} $KERNEL_DEFCONFIG
-config --disable CONFIG_LTO
-config --disable CONFIG_LTO_CLANG
-config --enable CONFIG_LTO_NONE
 
 if [ "$DEFCONFIG_TO_MERGE" ]; then
   log "Merging configs..."
