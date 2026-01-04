@@ -232,7 +232,7 @@ MAKE_ARGS=(
   LLVM_IAS=1
   ARCH=arm64
   CROSS_COMPILE=aarch64-linux-android-
-  -j2
+  -j$(($(nproc) / 2))
   O=$OUTDIR
 )
 KERNEL_IMAGE="$OUTDIR/arch/arm64/boot/Image"
