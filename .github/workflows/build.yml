@@ -21,18 +21,18 @@ on:
         default: ""
         type: choice
         options:
-          - "kernel"
-          - "defconfig"
+          - kernel
+          - defconfig
 
       KSU:
         description: KernelSU variant
-        default: ""
+        default: None
         type: choice
         options:
-          - "None"
-          - "Next"
-          - "Suki"
-          - "Magic"
+          - None
+          - Next
+          - Suki
+          - Magic
 
       KSU_SUSFS:
         description: Include SUSFS?
@@ -59,14 +59,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Print disk space before cleanup
+        shell: bash
+        run: |
+          df -h
+
+      - name: Free Disk Space (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          os_id=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+          echo "Detected OS: $os_id"
+
+          if command -v docker >/dev/null 2>&1; then
+            docker images -aq | xargs -r sudo docker rmi -f || true
+          fi
+
+          sudo rm -rf \
+            /usr/local/lib/android \
+            /usr/share/dotnet \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/share/powershell \
+            /usr/share/swift \
+            /usr/lib/jvm || true
+
+          if [[ "$os_id" == "ubuntu" ]]; then
+            sudo apt-get remove -y '^mysql-.*' '^dotnet-.*' 'php.*' '^mongodb-.*' '^llvm-.*' \
+              google-cloud-sdk google-cloud-cli || true
+            sudo apt-get autoremove -y
+            sudo apt-get autoclean -y
+          fi
+
+      - name: Print disk space after cleanup
+        shell: bash
+        run: |
+          df -h
+
       - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: Determine Build Status
+        shell: bash
         run: |
-          if [ "${{ toJson(github.event.inputs) }}" == "null" ]; then
+          if [[ "${{ github.event_name }}" == "workflow_call" ]]; then
             echo "STATUS=RELEASE" >> $GITHUB_ENV
             echo "TRIGGER=workflow_call" >> $GITHUB_ENV
           else
@@ -75,65 +113,57 @@ jobs:
           fi
 
       - name: Validate Inputs and Secrets
+        shell: bash
         env:
-          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }} # telegram chat id
-          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }} # telegram bot token
-          GH_TOKEN: ${{ secrets.GH_TOKEN }} # github token
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           KSU: ${{ inputs.KSU }}
           KSU_SUSFS: ${{ inputs.KSU_SUSFS }}
           KSU_MANUAL_HOOK: ${{ inputs.KSU_MANUAL_HOOK }}
         run: |
-          _error() {
-              echo "❌ ERROR: $*"
-              let ret++
-          }
-
           ret=0
-          # Check Secrets
-          if [[ -z "$TG_CHAT_ID" ]]; then
-            _error "Missing TG_CHAT_ID secret (Telegram Chat ID)"
-          fi
-          if [[ -z "$TG_BOT_TOKEN" ]]; then
-            _error "Missing TG_BOT_TOKEN secret (Telegram Bot Token)"
-          fi
-          if [[ -z "$GH_TOKEN" ]]; then
-            _error "Missing GH_TOKEN secret (GitHub PAT)"
+          error() { echo "❌ $1"; ret=$((ret+1)); }
+
+          [[ -z "$TG_CHAT_ID" ]] && error "Missing TG_CHAT_ID"
+          [[ -z "$TG_BOT_TOKEN" ]] && error "Missing TG_BOT_TOKEN"
+          [[ -z "$GH_TOKEN" ]] && error "Missing GH_TOKEN"
+
+          if [[ "$KSU" == "None" && "$KSU_SUSFS" == "true" ]]; then
+            error "SUSFS requires KernelSU"
           fi
 
-          # Check KernelSU variants
-          if [[ $KSU == "None" && $KSU_SUSFS == "true" ]]; then
-              _error "Cannot use SuSFS without KernelSU"
-          fi
-          if [[ $KSU == "None" && $KSU_MANUAL_HOOK == "true" ]]; then
-            _error "Cannot use KSU Manual Hooks without KernelSU!"
+          if [[ "$KSU" == "None" && "$KSU_MANUAL_HOOK" == "true" ]]; then
+            error "Manual hooks require KernelSU"
           fi
 
-          if [[ $ret -gt 0 ]]; then
-            exit $ret
-          fi
+          [[ $ret -gt 0 ]] && exit 1
 
       - name: Install Dependencies
+        shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y gh bc bison flex libssl-dev libelf-dev dwarves cpio
+          sudo apt-get install -y \
+            gh bc bison flex libssl-dev libelf-dev dwarves cpio
 
-      - name: Enable swap with high priority and swappiness
+      - name: Enable Swap
+        shell: bash
         run: |
-          sudo swapoff -a
-          sudo fallocate -l 12G /swapfile
+          sudo swapoff -a || true
+          sudo fallocate -l 5G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile --priority 100
-          sudo sysctl vm.swappiness=100
+          sudo sysctl vm.swappiness=200
           free -h
-          echo
           swapon --show
 
       - name: Run Build Script
+        shell: bash
         env:
-          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }} # telegram chat id
-          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }} # telegram bot token
-          GH_TOKEN: ${{ secrets.GH_TOKEN }} # github token
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           KSU: ${{ inputs.KSU }}
           KSU_SUSFS: ${{ inputs.KSU_SUSFS }}
           KSU_MANUAL_HOOK: ${{ inputs.KSU_MANUAL_HOOK }}
@@ -152,7 +182,7 @@ jobs:
             artifacts/*.zip
             artifacts/*.img
 
-      - name: Upload Artifacts (Info File)
+      - name: Upload Artifacts (Info)
         uses: actions/upload-artifact@v4
         with:
           name: info-${{ github.run_number }}
