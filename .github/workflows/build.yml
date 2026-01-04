@@ -94,7 +94,6 @@ jobs:
             sudo apt-get remove -y '^dotnet-.*' --fix-missing || printWarningMessage '^dotnet-.*'
             sudo apt-get remove -y 'php.*' --fix-missing || printWarningMessage 'php.*'
             sudo apt-get remove -y '^mongodb-.*' --fix-missing || printWarningMessage '^mongodb-.*'
-            sudo apt-get remove -y '^llvm-.*' --fix-missing || printWarningMessage '^llvm-.*'
             sudo apt-get remove -y google-cloud-sdk --fix-missing || printWarningMessage 'google-cloud-sdk'
             sudo apt-get remove -y google-cloud-cli --fix-missing || printWarningMessage 'google-cloud-cli'
             sudo apt-get autoremove -y >/dev/null 2>&1
